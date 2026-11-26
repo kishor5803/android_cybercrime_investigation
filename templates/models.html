@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% set heading="AI Model Benchmarks & Explainability (XAI)" %}
+{% block content %}
+<style>
+  .model-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; }
+  .cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 6px; }
+  .cm-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: center; }
+  .cm-cell.pos { background: #eaf7f2; border-color: #bee3d3; color: #1e6b4a; }
+  .cm-cell.neg { background: #fdf2f2; border-color: #fbd5d5; color: #9b2c2c; }
+  .cm-cell small { display: block; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 3px; font-weight: 700; }
+  .cm-cell b { font-size: 18px; font-family: Manrope, sans-serif; }
+  .metric-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+  .metric-high { background: #e6f7ef; color: #1b7a4f; }
+  .metric-med { background: #fef6e7; color: #b7791f; }
+  .xai-tokens { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .xai-pill { padding: 4px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .xai-phish { background: #fce8e6; color: #c5221f; border: 1px solid #f5c6cb; }
+  .xai-benign { background: #e6f4ea; color: #137333; border: 1px solid #c3e6cb; }
+  .xai-neutral { background: #edf2f7; color: #4a5568; }
+  .playground-box { background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 22px; margin-top: 24px; }
+  .interactive-tabs { display: flex; gap: 10px; margin-bottom: 14px; }
+  .tab-btn { background: #f0f4f7; border: 1px solid #dce4e9; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: 700; font-size: 12px; }
+  .tab-btn.active { background: var(--navy2); color: white; border-color: var(--navy2); }
+  .result-banner { border-radius: 8px; padding: 16px; margin-top: 14px; display: none; }
+  .score-gauge { font-size: 26px; font-weight: 800; font-family: Manrope, sans-serif; }
+</style>
+
+<div class="case-title">
+  <div>
+    <p class="eyebrow">MODULE 04, 05 & 09 · ACADEMIC EVALUATION</p>
+    <h2>Multi-Model Classifier Benchmarks</h2>
+    <p class="muted">Evaluation metrics (Stratified 4-Fold CV) comparing SMS Phishing detection algorithms and URL risk scoring engines.</p>
+  </div>
+  <a class="btn outline" href="#sandbox">Live XAI Sandbox ↓</a>
+</div>
+
+<!-- SECTION 1: SMS PHISHING MODEL COMPARISON -->
+<div class="section-head">
+  <div>
+    <p class="eyebrow">MODULE 04: SMS PHISHING CLASSIFICATION</p>
+    <h2>Model Performance Comparison</h2>
+  </div>
+  <span class="muted">Corpus: {{ benchmarks.sms.dataset_size }} labeled records ({{ benchmarks.sms.phishing_count }} phishing / {{ benchmarks.sms.benign_count }} benign)</span>
+</div>
+
+<div class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Algorithm / Model</th>
+        <th>Accuracy</th>
+        <th>Precision</th>
+        <th>Recall</th>
+        <th>F1-Score</th>
+        <th>True Positives (TP)</th>
+        <th>False Positives (FP)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, m in benchmarks.sms.models.items() %}
+      <tr>
+        <td><b>{{ name }}</b></td>
+        <td><span class="metric-badge metric-high">{{ m.accuracy }}%</span></td>
+        <td><span class="metric-badge metric-high">{{ m.precision }}%</span></td>
+        <td><span class="metric-badge metric-high">{{ m.recall }}%</span></td>
+        <td><span class="metric-badge metric-high">{{ m.f1_score }}%</span></td>
+        <td class="mono" style="color: #1b7a4f; font-weight: bold;">{{ m.confusion_matrix.tp }}</td>
+        <td class="mono" style="color: #c5221f; font-weight: bold;">{{ m.confusion_matrix.fp }}</td>
+        <td><span class="tag">Trained & Active</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 2: CONFUSION MATRICES -->
+<div class="section-head">
+  <div>
+    <p class="eyebrow">CLASSIFICATION AUDIT</p>
+    <h2>Confusion Matrices (4-Fold Cross-Validation)</h2>
+  </div>
+</div>
+
+<div class="model-cards-grid">
+  {% for name, m in benchmarks.sms.models.items() %}
+  <div class="panel" style="margin-bottom:0;">
+    <p class="eyebrow">{{ name|upper }}</p>
+    <h3>{{ name }}</h3>
+    <small class="muted">F1-Score: <b>{{ m.f1_score }}%</b> · Accuracy: <b>{{ m.accuracy }}%</b></small>
+    
+    <div class="cm-grid">
+      <div class="cm-cell pos">
+        <small>True Negative</small>
+        <b>{{ m.confusion_matrix.tn }}</b>
+      </div>
+      <div class="cm-cell neg">
+        <small>False Positive</small>
+        <b>{{ m.confusion_matrix.fp }}</b>
+      </div>
+      <div class="cm-cell neg">
+        <small>False Negative</small>
+        <b>{{ m.confusion_matrix.fn }}</b>
+      </div>
+      <div class="cm-cell pos">
+        <small>True Positive</small>
+        <b>{{ m.confusion_matrix.tp }}</b>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:10px; color:#85939d; margin-top:6px;">
+      <span>Pred: Benign / Phish</span>
+      <span>Actual: Benign / Phish</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- SECTION 3: EXPLAINABLE AI (XAI) VOCABULARY WEIGHTS -->
+<div class="two-col" style="margin-top: 20px;">
+  <div class="panel">
+    <p class="eyebrow">MODULE 09: EXPLAINABLE AI (XAI)</p>
+    <h2>Top Phishing Feature Weights</h2>
+    <p class="muted">Tokens with highest positive linear coefficients driving classification towards fraud/suspicion.</p>
+    <div class="xai-tokens">
+      {% for item in benchmarks.sms.top_features.phishing %}
+      <span class="xai-pill xai-phish">
+        <b>{{ item.token }}</b>
+        <small>+{{ item.weight }}</small>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">MODULE 09: EXPLAINABLE AI (XAI)</p>
+    <h2>Top Benign Feature Weights</h2>
+    <p class="muted">Tokens with negative coefficients indicating normal legitimate conversation.</p>
+    <div class="xai-tokens">
+      {% for item in benchmarks.sms.top_features.benign %}
+      <span class="xai-pill xai-benign">
+        <b>{{ item.token }}</b>
+        <small>{{ item.weight }}</small>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: URL RISK ML ENGINE -->
+<div class="section-head" style="margin-top: 20px;">
+  <div>
+    <p class="eyebrow">MODULE 05: URL RISK CLASSIFIER</p>
+    <h2>Lexical & Structural ML Engine</h2>
+  </div>
+  <span class="muted">{{ benchmarks.url.dataset_size }} Domain & URL Samples</span>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <h3>URL Models Performance</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Accuracy</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1-Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, m in benchmarks.url.models.items() %}
+        <tr>
+          <td><b>{{ name }}</b></td>
+          <td><span class="metric-badge metric-high">{{ m.accuracy }}%</span></td>
+          <td><span class="metric-badge metric-high">{{ m.precision }}%</span></td>
+          <td><span class="metric-badge metric-high">{{ m.recall }}%</span></td>
+          <td><span class="metric-badge metric-high">{{ m.f1_score }}%</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>Engineered Feature Vector (11 Features)</h3>
+    <p class="muted">Structural heuristics extracted and scaled for Random Forest classification:</p>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+      {% for feat in benchmarks.url.feature_names %}
+      <span class="tag" style="background:#eaf0f6; color:#21425c;">{{ feat }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5: LIVE INVESTIGATOR SANDBOX (PLAYGROUND) -->
+<div id="sandbox" class="playground-box">
+  <p class="eyebrow">INTERACTIVE EVALUATION PLAYGROUND</p>
+  <h2>Live Forensic AI Sandbox</h2>
+  <p class="muted">Test any arbitrary SMS message or suspicious URL in real-time to inspect classification probabilities, heuristic indicators, and Explainable AI (XAI) feature attribution.</p>
+
+  <div class="interactive-tabs">
+    <button type="button" class="tab-btn active" onclick="switchSandbox('sms')">SMS / Smishing Analysis</button>
+    <button type="button" class="tab-btn" onclick="switchSandbox('url')">URL Risk Analysis</button>
+  </div>
+
+  <div id="sms-controls">
+    <label>Select Classifier Algorithm
+      <select id="model-select" style="width:100%; border:1px solid #dce4e9; border-radius:7px; padding:10px; font:13px 'DM Sans'; background:#fff;">
+        <option value="Logistic Regression">Logistic Regression (Balanced Weights + Feature Weights)</option>
+        <option value="Multinomial Naive Bayes">Multinomial Naive Bayes (Laplace Smoothed)</option>
+        <option value="Random Forest">Random Forest (Ensemble Tree)</option>
+      </select>
+    </label>
+  </div>
+
+  <label id="input-label" style="margin-top:10px;">Input SMS Text
+    <textarea id="sandbox-input" rows="3" placeholder="Enter message text, e.g. URGENT: Your bank account is locked. Update KYC at http://secure-bank.top"></textarea>
+  </label>
+
+  <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+    <button type="button" class="btn primary" onclick="runSandboxTest()">Run Forensic Analysis →</button>
+    <button type="button" class="btn outline" onclick="loadSample()">Load Sample Fraud</button>
+  </div>
+
+  <div id="sandbox-result" class="result-banner">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(0,0,0,0.08); padding-bottom:10px; margin-bottom:12px;">
+      <div>
+        <span id="res-badge" class="tag" style="font-size:12px;">ANALYSIS RESULT</span>
+        <h3 id="res-label" style="margin:4px 0 0; font-size:18px;">Label</h3>
+      </div>
+      <div style="text-align:right;">
+        <small class="muted" style="display:block;">Risk Screening Score</small>
+        <span id="res-score" class="score-gauge">0.0%</span>
+      </div>
+    </div>
+
+    <p id="res-explanation" style="font-size:13px; line-height:1.5; color:#334155; margin-bottom:12px;"></p>
+
+    <div id="xai-container">
+      <small class="eyebrow" style="display:block; margin-bottom:6px;">EXPLAINABLE AI: CONTRIBUTING TOKEN INFLUENCE</small>
+      <div id="xai-tokens-list" class="xai-tokens"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentMode = 'sms';
+
+function switchSandbox(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  const smsControls = document.getElementById('sms-controls');
+  const inputLabel = document.getElementById('input-label');
+  const inputField = document.getElementById('sandbox-input');
+
+  if (mode === 'sms') {
+    smsControls.style.display = 'block';
+    inputLabel.childNodes[0].nodeValue = "Input SMS Text";
+    inputField.placeholder = "Enter message text, e.g. URGENT: Your bank account is blocked. Verify KYC now at http://fake.link";
+  } else {
+    smsControls.style.display = 'none';
+    inputLabel.childNodes[0].nodeValue = "Input URL Target";
+    inputField.placeholder = "Enter target URL, e.g. http://192.168.1.100/login/update-kyc.html";
+  }
+  document.getElementById('sandbox-result').style.display = 'none';
+}
+
+function loadSample() {
+  const inputField = document.getElementById('sandbox-input');
+  if (currentMode === 'sms') {
+    inputField.value = "ALERT: Your HDFC Bank account is suspended due to pending PAN card verification. Update immediately at http://192.168.1.50/sbi-verify.html to avoid Rs 10,000 penalty.";
+  } else {
+    inputField.value = "http://192.168.1.50:8080/secure-banking-login/verify.php?token=89218";
+  }
+}
+
+async function runSandboxTest() {
+  const inputVal = document.getElementById('sandbox-input').value.trim();
+  if (!inputVal) {
+    alert("Please enter text or URL to analyze.");
+    return;
+  }
+
+  const modelSelect = document.getElementById('model-select').value;
+  const resultBox = document.getElementById('sandbox-result');
+  const resLabel = document.getElementById('res-label');
+  const resScore = document.getElementById('res-score');
+  const resBadge = document.getElementById('res-badge');
+  const resExplanation = document.getElementById('res-explanation');
+  const xaiList = document.getElementById('xai-tokens-list');
+  const xaiContainer = document.getElementById('xai-container');
+
+  try {
+    const resp = await fetch("{{ url_for('models_test_api') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: currentMode, input: inputVal, model: modelSelect })
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      alert(data.error || "Analysis failed.");
+      return;
+    }
+
+    const res = data.result;
+    resultBox.style.display = 'block';
+    resLabel.textContent = res.label;
+    resScore.textContent = res.score.toFixed(1) + "%";
+    resExplanation.textContent = res.explanation;
+
+    if (res.score >= 50) {
+      resultBox.style.background = "#fff5f5";
+      resultBox.style.border = "1px solid #fed7d7";
+      resScore.style.color = "#c5221f";
+      resBadge.className = "tag";
+      resBadge.style.background = "#fed7d7";
+      resBadge.style.color = "#9b2c2c";
+    } else {
+      resultBox.style.background = "#f0fff4";
+      resultBox.style.border = "1px solid #c6f6d5";
+      resScore.style.color = "#22543d";
+      resBadge.className = "tag";
+      resBadge.style.background = "#c6f6d5";
+      resBadge.style.color = "#22543d";
+    }
+
+    xaiList.innerHTML = '';
+    if (res.token_contributions && res.token_contributions.length > 0) {
+      xaiContainer.style.display = 'block';
+      res.token_contributions.forEach(t => {
+        const span = document.createElement('span');
+        span.className = t.direction === 'phishing' ? 'xai-pill xai-phish' : 'xai-pill xai-benign';
+        span.innerHTML = `<b>${t.token}</b> <small>${t.direction === 'phishing' ? '+' : ''}${t.impact}</small>`;
+        xaiList.appendChild(span);
+      });
+    } else if (res.reasons && res.reasons.length > 0) {
+      xaiContainer.style.display = 'block';
+      res.reasons.forEach(r => {
+        const span = document.createElement('span');
+        span.className = 'xai-pill xai-phish';
+        span.innerHTML = `<b>${r}</b>`;
+        xaiList.appendChild(span);
+      });
+    } else {
+      xaiContainer.style.display = 'none';
+    }
+  } catch (err) {
+    alert("Connection error while running analysis: " + err);
+  }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,1 @@
+// Reserved for progressive enhancement. All critical operations work without JavaScript.

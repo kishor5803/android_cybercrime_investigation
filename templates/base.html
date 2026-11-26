@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title or "ForensicLab" }}</title><link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}"></head>
+<body><div class="shell">
+<aside class="sidebar"><div class="brand"><span class="brandmark">F</span><div><b>FORENSICLAB</b><small>ANDROID INVESTIGATION</small></div></div>
+<nav><a href="{{ url_for('dashboard') }}">◫ Dashboard</a><a href="{{ url_for('cases') }}">▣ Investigation cases</a><a href="{{ url_for('models_dashboard') }}">📊 AI Models & Benchmarks</a><a href="{{ url_for('logout') }}">↪ Sign out</a></nav>
+<div class="side-note">Evidence-led analysis<br><small>Human review required</small></div></aside>
+<main class="main"><header><div><span class="eyebrow">DIGITAL FORENSICS / ANDROID</span><h1>{{ heading or "Investigation workspace" }}</h1></div><div class="user-pill">● {{ session.get('user','Investigator') }}</div></header>
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+{% block content %}{% endblock %}
+<footer>Prototype for lawful, authorised evidence analysis · AI findings are not legal conclusions</footer></main></div></body></html>

@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% set heading="Evidence correlation" %}{% block content %}
+<div class="case-title"><div><p class="eyebrow">{{ case.case_code }}</p><h2>Candidate relationships</h2><p class="muted">Shared domains and same-day timestamps are shown as leads for manual review.</p></div><a class="btn outline" href="{{ url_for('case_detail',case_id=case.id) }}">← Back to case</a></div>
+{% for l in links %}<div class="link-card"><div class="link-node"><b>{{ l.a|upper }}</b><p>{{ l.a_content }}</p></div><div class="link-reason">↔<small>{{ l.reason }}</small></div><div class="link-node"><b>{{ l.b|upper }}</b><p>{{ l.b_content }}</p></div><small class="warning">{{ l.caution }}</small></div>{% else %}<div class="panel empty">No candidate relationships found. More evidence or compatible timestamps/domains may be required.</div>{% endfor %}
+{% endblock %}
