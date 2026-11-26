@@ -16,9 +16,25 @@ from ml_engine import ForensicMLEngine
 from reporting import create_case_report
 
 ROOT = Path(__file__).resolve().parent
+
+def _load_env(env_path: Path):
+    """Load key=value pairs from a local .env file without overriding existing env vars."""
+    if not env_path.is_file():
+        return
+    for raw in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+
+_load_env(ROOT / ".env")
+
 UPLOAD_DIR = ROOT / "uploads"
 REPORT_DIR = ROOT / "reports"
 DB_PATH = ROOT / "instance" / "forensics.db"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+REPORT_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_EXTENSIONS = {"csv", "json", "txt", "db", "sqlite", "sqlite3", "apk", "xml", "log"}
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024
 
@@ -310,6 +326,10 @@ def models_test_api():
 def health():
     return {"status": "ok", "application": "Android Cybercrime Investigation System"}
 
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False)
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
+    app.run(host=host, port=port, debug=debug)
